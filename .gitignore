@@ -1,0 +1,7 @@
+venv/
+__pycache__/
+*.pyc
+.env
+.pytest_cache/
+data/synthea/fhir/*.json
+!data/synthea/fhir/.gitkeep

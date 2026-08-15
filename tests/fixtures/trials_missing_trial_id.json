@@ -1,0 +1,10 @@
+{
+  "_disclaimer": "SYNTHETIC/DEVELOPMENT DATA ONLY. Fictional test fixture trials, not real clinical trials.",
+  "trials": [
+    {
+      "title": "No ID Trial",
+      "status": "recruiting",
+      "eligibility": {"inclusion_criteria": [], "exclusion_criteria": []}
+    }
+  ]
+}

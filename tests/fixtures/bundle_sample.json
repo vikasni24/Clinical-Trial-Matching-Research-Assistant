@@ -1,0 +1,41 @@
+{
+  "resourceType": "Bundle",
+  "id": "bundle-001",
+  "type": "collection",
+  "entry": [
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "patient-002",
+        "name": [{"family": "Smith", "given": ["John"]}],
+        "gender": "male",
+        "birthDate": "1975-03-22"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "obs-100",
+        "status": "final",
+        "subject": {"reference": "Patient/patient-002"},
+        "code": {"text": "Heart rate"},
+        "valueQuantity": {"value": 72, "unit": "beats/minute"}
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Condition",
+        "id": "cond-200",
+        "subject": {"reference": "Patient/patient-002"},
+        "code": {"text": "Hypertension"}
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Coverage",
+        "id": "cov-999",
+        "status": "active"
+      }
+    }
+  ]
+}

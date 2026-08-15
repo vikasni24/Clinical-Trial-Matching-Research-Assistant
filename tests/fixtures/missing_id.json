@@ -1,0 +1,6 @@
+{
+  "resourceType": "Observation",
+  "status": "final",
+  "subject": {"reference": "Patient/patient-002"},
+  "code": {"text": "Blood pressure"}
+}

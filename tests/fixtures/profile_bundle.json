@@ -1,0 +1,207 @@
+{
+  "resourceType": "Bundle",
+  "id": "profile-bundle-001",
+  "type": "collection",
+  "entry": [
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "profile-patient-1",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-race",
+            "extension": [
+              {
+                "url": "ombCategory",
+                "valueCoding": {
+                  "system": "urn:oid:2.16.840.1.113883.6.238",
+                  "code": "2054-5",
+                  "display": "Black or African American"
+                }
+              },
+              {"url": "text", "valueString": "Black or African American"}
+            ]
+          },
+          {
+            "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity",
+            "extension": [
+              {
+                "url": "ombCategory",
+                "valueCoding": {
+                  "system": "urn:oid:2.16.840.1.113883.6.238",
+                  "code": "2186-5",
+                  "display": "Not Hispanic or Latino"
+                }
+              },
+              {"url": "text", "valueString": "Not Hispanic or Latino"}
+            ]
+          }
+        ],
+        "name": [{"use": "official", "family": "Doe", "given": ["Jane", "Q"]}],
+        "telecom": [{"system": "phone", "value": "555-000-1111", "use": "home"}],
+        "gender": "female",
+        "birthDate": "1980-05-12",
+        "address": [
+          {
+            "line": ["123 Main St"],
+            "city": "Boston",
+            "state": "MA",
+            "postalCode": "02118",
+            "country": "US"
+          }
+        ],
+        "maritalStatus": {
+          "coding": [
+            {"system": "http://terminology.hl7.org/CodeSystem/v3-MaritalStatus", "code": "M", "display": "Married"}
+          ],
+          "text": "Married"
+        }
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Condition",
+        "id": "cond-1",
+        "clinicalStatus": {
+          "coding": [{"system": "http://terminology.hl7.org/CodeSystem/condition-clinical", "code": "active"}]
+        },
+        "verificationStatus": {
+          "coding": [{"system": "http://terminology.hl7.org/CodeSystem/condition-ver-status", "code": "confirmed"}]
+        },
+        "code": {
+          "coding": [{"system": "http://snomed.info/sct", "code": "38341003", "display": "Hypertension"}],
+          "text": "Hypertension"
+        },
+        "subject": {"reference": "Patient/profile-patient-1"},
+        "onsetDateTime": "2015-06-01",
+        "recordedDate": "2015-06-02"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "obs-1",
+        "status": "final",
+        "code": {
+          "coding": [{"system": "http://loinc.org", "code": "8480-6", "display": "Systolic Blood Pressure"}],
+          "text": "Systolic Blood Pressure"
+        },
+        "subject": {"reference": "urn:uuid:profile-patient-1"},
+        "effectiveDateTime": "2023-01-10",
+        "valueQuantity": {"value": 125, "unit": "mm[Hg]"},
+        "referenceRange": [{"low": {"value": 90, "unit": "mm[Hg]"}, "high": {"value": 120, "unit": "mm[Hg]"}}],
+        "interpretation": [{"coding": [{"system": "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation", "code": "H"}]}]
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "MedicationRequest",
+        "id": "med-1",
+        "status": "active",
+        "intent": "order",
+        "medicationCodeableConcept": {
+          "coding": [{"system": "http://www.nlm.nih.gov/research/umls/rxnorm", "code": "860975", "display": "Metformin"}],
+          "text": "Metformin 500 MG"
+        },
+        "subject": {"reference": "Patient/profile-patient-1"},
+        "authoredOn": "2022-03-01",
+        "dosageInstruction": [
+          {
+            "text": "Take 1 tablet twice daily",
+            "route": {"coding": [{"code": "PO", "display": "Oral"}]},
+            "timing": {"repeat": {"frequency": 2, "period": 1, "periodUnit": "d"}}
+          }
+        ],
+        "dispenseRequest": {"validityPeriod": {"end": "2023-03-01"}}
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Procedure",
+        "id": "proc-1",
+        "status": "completed",
+        "code": {
+          "coding": [{"system": "http://snomed.info/sct", "code": "6025007", "display": "Appendectomy"}],
+          "text": "Appendectomy"
+        },
+        "subject": {"reference": "Patient/profile-patient-1"},
+        "performedPeriod": {"start": "2019-08-15", "end": "2019-08-15"},
+        "reasonCode": [{"text": "Appendicitis"}]
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Encounter",
+        "id": "enc-1",
+        "status": "finished",
+        "type": [
+          {"coding": [{"system": "http://snomed.info/sct", "code": "185349003", "display": "Ambulatory"}], "text": "Ambulatory"}
+        ],
+        "subject": {"reference": "Patient/profile-patient-1"},
+        "period": {"start": "2023-01-10T08:00:00-05:00", "end": "2023-01-10T09:00:00-05:00"},
+        "reasonCode": [{"text": "Routine checkup"}],
+        "location": [{"location": {"display": "Boston Clinic"}}]
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "DiagnosticReport",
+        "id": "dr-1",
+        "status": "final",
+        "code": {"text": "CBC Panel"},
+        "category": [{"coding": [{"system": "http://terminology.hl7.org/CodeSystem/v2-0074", "code": "LAB", "display": "Laboratory"}]}],
+        "subject": {"reference": "Patient/profile-patient-1"},
+        "effectiveDateTime": "2023-01-10",
+        "result": [{"reference": "Observation/obs-1"}]
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "AllergyIntolerance",
+        "id": "allergy-1",
+        "clinicalStatus": {
+          "coding": [{"system": "http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical", "code": "active"}]
+        },
+        "verificationStatus": {
+          "coding": [{"system": "http://terminology.hl7.org/CodeSystem/allergyintolerance-verification", "code": "confirmed"}]
+        },
+        "code": {
+          "coding": [{"system": "http://snomed.info/sct", "code": "91935009", "display": "Peanut"}],
+          "text": "Peanut allergy"
+        },
+        "patient": {"reference": "Patient/profile-patient-1"},
+        "reaction": [
+          {
+            "manifestation": [{"coding": [{"system": "http://snomed.info/sct", "code": "39579001", "display": "Anaphylaxis"}]}],
+            "severity": "severe"
+          }
+        ]
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Immunization",
+        "id": "imm-1",
+        "status": "completed",
+        "patient": {"reference": "Patient/profile-patient-1"}
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "profile-patient-2",
+        "name": [{"family": "Roe", "given": ["Richard"]}],
+        "gender": "male",
+        "birthDate": "1990-01-01"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Condition",
+        "id": "cond-2",
+        "code": {"coding": [{"system": "http://snomed.info/sct", "code": "44054006", "display": "Diabetes"}], "text": "Diabetes"},
+        "subject": {"reference": "Patient/profile-patient-2"}
+      }
+    }
+  ]
+}

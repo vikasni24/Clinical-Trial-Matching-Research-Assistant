@@ -1,0 +1,441 @@
+{
+  "_disclaimer": "SYNTHETIC / DEVELOPMENT DATA ONLY. These are fictional clinical trial records created for local development and automated testing of the Phase 3 deterministic eligibility-matching engine. They are NOT real clinical trials, are NOT registered with any regulatory body or registry (e.g. ClinicalTrials.gov), and must never be presented to a user as real, active, or recruiting studies. trial_id values are fixture identifiers, not real registry identifiers.",
+  "trials": [
+    {
+      "trial_id": "DEV-TRIAL-001",
+      "title": "Hypertension Management Extension Study (synthetic)",
+      "brief_title": "HTN Management Extension",
+      "official_title": "A Synthetic Extension Study of Long-Term Hypertension Management Strategies",
+      "sponsor": "Synthetic Research Institute (fictional, development fixture only)",
+      "study_type": "Interventional",
+      "phase": "Phase 3",
+      "status": "recruiting",
+      "conditions": [{"name": "Hypertension", "code": "59621000", "system": "http://snomed.info/sct"}],
+      "interventions": [{"name": "Lisinopril titration protocol", "type": "Drug", "description": "Standardized ACE-inhibitor dose titration"}],
+      "eligibility": {
+        "minimum_age": 18,
+        "maximum_age": 90,
+        "sex": "all",
+        "inclusion_criteria": [
+          {"type": "condition", "label": "Hypertension", "code": "59621000", "system": "http://snomed.info/sct", "display": "Hypertension"}
+        ],
+        "exclusion_criteria": []
+      },
+      "locations": [{"facility": "Synthetic Research Site A", "city": "Boston", "state": "MA", "country": "US", "recruiting_status": "recruiting"}],
+      "source": "synthetic_dev_fixture",
+      "source_id": "DEV-TRIAL-001",
+      "source_url": null,
+      "last_updated": "2026-01-01"
+    },
+    {
+      "trial_id": "DEV-TRIAL-002",
+      "title": "Prediabetes Lifestyle Intervention Trial (synthetic)",
+      "brief_title": "Prediabetes Lifestyle Intervention",
+      "official_title": "A Synthetic Randomized Trial of Structured Lifestyle Intervention in Prediabetes",
+      "sponsor": "Synthetic Research Institute (fictional, development fixture only)",
+      "study_type": "Interventional",
+      "phase": "Phase 2",
+      "status": "recruiting",
+      "conditions": [{"name": "Prediabetes", "code": "15777000", "system": "http://snomed.info/sct"}],
+      "interventions": [{"name": "Structured diet and exercise coaching", "type": "Behavioral", "description": "12-week coaching program"}],
+      "eligibility": {
+        "minimum_age": 18,
+        "maximum_age": null,
+        "sex": "all",
+        "inclusion_criteria": [
+          {"type": "condition", "label": "Prediabetes", "code": "15777000", "system": "http://snomed.info/sct", "display": "Prediabetes"}
+        ],
+        "exclusion_criteria": []
+      },
+      "locations": [{"facility": "Synthetic Research Site B", "city": "Cambridge", "state": "MA", "country": "US", "recruiting_status": "recruiting"}],
+      "source": "synthetic_dev_fixture",
+      "source_id": "DEV-TRIAL-002",
+      "source_url": null,
+      "last_updated": "2026-01-01"
+    },
+    {
+      "trial_id": "DEV-TRIAL-003",
+      "title": "Pediatric Wellness Cohort Study (synthetic)",
+      "brief_title": "Pediatric Wellness Cohort",
+      "official_title": "A Synthetic Observational Cohort Study of Pediatric General Wellness",
+      "sponsor": "Synthetic Research Institute (fictional, development fixture only)",
+      "study_type": "Observational",
+      "phase": null,
+      "status": "recruiting",
+      "conditions": [],
+      "interventions": [],
+      "eligibility": {
+        "minimum_age": 0,
+        "maximum_age": 17,
+        "sex": "all",
+        "inclusion_criteria": [],
+        "exclusion_criteria": []
+      },
+      "locations": [{"facility": "Synthetic Research Site C", "city": "Worcester", "state": "MA", "country": "US", "recruiting_status": "recruiting"}],
+      "source": "synthetic_dev_fixture",
+      "source_id": "DEV-TRIAL-003",
+      "source_url": null,
+      "last_updated": "2026-01-01"
+    },
+    {
+      "trial_id": "DEV-TRIAL-004",
+      "title": "Geriatric Frailty and Aging Study (synthetic)",
+      "brief_title": "Geriatric Frailty Study",
+      "official_title": "A Synthetic Longitudinal Study of Frailty Markers in Older Adults",
+      "sponsor": "Synthetic Research Institute (fictional, development fixture only)",
+      "study_type": "Observational",
+      "phase": null,
+      "status": "recruiting",
+      "conditions": [],
+      "interventions": [],
+      "eligibility": {
+        "minimum_age": 65,
+        "maximum_age": null,
+        "sex": "all",
+        "inclusion_criteria": [],
+        "exclusion_criteria": []
+      },
+      "locations": [{"facility": "Synthetic Research Site D", "city": "Quincy", "state": "MA", "country": "US", "recruiting_status": "recruiting"}],
+      "source": "synthetic_dev_fixture",
+      "source_id": "DEV-TRIAL-004",
+      "source_url": null,
+      "last_updated": "2026-01-01"
+    },
+    {
+      "trial_id": "DEV-TRIAL-005",
+      "title": "Obesity BMI Threshold Intervention (synthetic)",
+      "brief_title": "Obesity BMI Intervention",
+      "official_title": "A Synthetic Trial of Weight-Management Intervention in Adults with BMI >= 30",
+      "sponsor": "Synthetic Research Institute (fictional, development fixture only)",
+      "study_type": "Interventional",
+      "phase": "Phase 2",
+      "status": "recruiting",
+      "conditions": [{"name": "Obesity", "code": "162864005", "system": "http://snomed.info/sct"}],
+      "interventions": [{"name": "Weight management program", "type": "Behavioral", "description": null}],
+      "eligibility": {
+        "minimum_age": 18,
+        "maximum_age": null,
+        "sex": "all",
+        "inclusion_criteria": [
+          {"type": "observation_threshold", "label": "Body Mass Index", "code": "39156-5", "system": "http://loinc.org", "display": "Body Mass Index", "operator": ">=", "value": 30, "unit": "kg/m2"}
+        ],
+        "exclusion_criteria": []
+      },
+      "locations": [{"facility": "Synthetic Research Site E", "city": "Newton", "state": "MA", "country": "US", "recruiting_status": "recruiting"}],
+      "source": "synthetic_dev_fixture",
+      "source_id": "DEV-TRIAL-005",
+      "source_url": null,
+      "last_updated": "2026-01-01"
+    },
+    {
+      "trial_id": "DEV-TRIAL-006",
+      "title": "Anemia Hemoglobin Study (synthetic)",
+      "brief_title": "Anemia Hemoglobin Study",
+      "official_title": "A Synthetic Trial of Iron Supplementation in Women with Low Hemoglobin",
+      "sponsor": "Synthetic Research Institute (fictional, development fixture only)",
+      "study_type": "Interventional",
+      "phase": "Phase 2",
+      "status": "recruiting",
+      "conditions": [{"name": "Anemia", "code": "271737000", "system": "http://snomed.info/sct"}],
+      "interventions": [{"name": "Oral iron supplementation", "type": "Drug", "description": null}],
+      "eligibility": {
+        "minimum_age": 18,
+        "maximum_age": null,
+        "sex": "female",
+        "inclusion_criteria": [
+          {"type": "observation_threshold", "label": "Hemoglobin", "code": "718-7", "system": "http://loinc.org", "display": "Hemoglobin [Mass/volume] in Blood", "operator": "<", "value": 12, "unit": "g/dL"}
+        ],
+        "exclusion_criteria": []
+      },
+      "locations": [{"facility": "Synthetic Research Site F", "city": "Somerville", "state": "MA", "country": "US", "recruiting_status": "recruiting"}],
+      "source": "synthetic_dev_fixture",
+      "source_id": "DEV-TRIAL-006",
+      "source_url": null,
+      "last_updated": "2026-01-01"
+    },
+    {
+      "trial_id": "DEV-TRIAL-007",
+      "title": "Women's Reproductive Health Registry (synthetic)",
+      "brief_title": "Women's Health Registry",
+      "official_title": "A Synthetic Observational Registry of Reproductive-Age Women's Health",
+      "sponsor": "Synthetic Research Institute (fictional, development fixture only)",
+      "study_type": "Observational",
+      "phase": null,
+      "status": "recruiting",
+      "conditions": [],
+      "interventions": [],
+      "eligibility": {
+        "minimum_age": 18,
+        "maximum_age": 45,
+        "sex": "female",
+        "inclusion_criteria": [],
+        "exclusion_criteria": []
+      },
+      "locations": [{"facility": "Synthetic Research Site G", "city": "Brookline", "state": "MA", "country": "US", "recruiting_status": "recruiting"}],
+      "source": "synthetic_dev_fixture",
+      "source_id": "DEV-TRIAL-007",
+      "source_url": null,
+      "last_updated": "2026-01-01"
+    },
+    {
+      "trial_id": "DEV-TRIAL-008",
+      "title": "Male Cardiovascular Risk Study (synthetic)",
+      "brief_title": "Male Cardiovascular Risk Study",
+      "official_title": "A Synthetic Study of Cardiovascular Risk in Normotensive Men",
+      "sponsor": "Synthetic Research Institute (fictional, development fixture only)",
+      "study_type": "Observational",
+      "phase": null,
+      "status": "recruiting",
+      "conditions": [],
+      "interventions": [],
+      "eligibility": {
+        "minimum_age": 40,
+        "maximum_age": null,
+        "sex": "male",
+        "inclusion_criteria": [],
+        "exclusion_criteria": [
+          {"type": "condition", "label": "Hypertension", "code": "59621000", "system": "http://snomed.info/sct", "display": "Hypertension"}
+        ]
+      },
+      "locations": [{"facility": "Synthetic Research Site H", "city": "Waltham", "state": "MA", "country": "US", "recruiting_status": "recruiting"}],
+      "source": "synthetic_dev_fixture",
+      "source_id": "DEV-TRIAL-008",
+      "source_url": null,
+      "last_updated": "2026-01-01"
+    },
+    {
+      "trial_id": "DEV-TRIAL-009",
+      "title": "Anticoagulant Therapy Registry (synthetic)",
+      "brief_title": "Anticoagulant Therapy Registry",
+      "official_title": "A Synthetic Registry of Patients Receiving Warfarin Anticoagulation",
+      "sponsor": "Synthetic Research Institute (fictional, development fixture only)",
+      "study_type": "Observational",
+      "phase": null,
+      "status": "recruiting",
+      "conditions": [],
+      "interventions": [],
+      "eligibility": {
+        "minimum_age": 18,
+        "maximum_age": null,
+        "sex": "all",
+        "inclusion_criteria": [
+          {"type": "medication", "label": "Warfarin", "code": "855332", "system": "http://www.nlm.nih.gov/research/umls/rxnorm", "display": "Warfarin Sodium 5 MG Oral Tablet"}
+        ],
+        "exclusion_criteria": []
+      },
+      "locations": [{"facility": "Synthetic Research Site I", "city": "Medford", "state": "MA", "country": "US", "recruiting_status": "recruiting"}],
+      "source": "synthetic_dev_fixture",
+      "source_id": "DEV-TRIAL-009",
+      "source_url": null,
+      "last_updated": "2026-01-01"
+    },
+    {
+      "trial_id": "DEV-TRIAL-010",
+      "title": "Penicillin-Free Antibiotic Safety Study (synthetic)",
+      "brief_title": "Penicillin-Free Antibiotic Safety",
+      "official_title": "A Synthetic Safety Study of an Alternative Antibiotic Excluding Penicillin-Allergic Patients",
+      "sponsor": "Synthetic Research Institute (fictional, development fixture only)",
+      "study_type": "Interventional",
+      "phase": "Phase 1",
+      "status": "recruiting",
+      "conditions": [],
+      "interventions": [{"name": "Alternative antibiotic regimen", "type": "Drug", "description": null}],
+      "eligibility": {
+        "minimum_age": 0,
+        "maximum_age": null,
+        "sex": "all",
+        "inclusion_criteria": [],
+        "exclusion_criteria": [
+          {"type": "allergy", "label": "Penicillin", "code": "7984", "system": "http://www.nlm.nih.gov/research/umls/rxnorm", "display": "Penicillin V"}
+        ]
+      },
+      "locations": [{"facility": "Synthetic Research Site J", "city": "Malden", "state": "MA", "country": "US", "recruiting_status": "recruiting"}],
+      "source": "synthetic_dev_fixture",
+      "source_id": "DEV-TRIAL-010",
+      "source_url": null,
+      "last_updated": "2026-01-01"
+    },
+    {
+      "trial_id": "DEV-TRIAL-011",
+      "title": "Controlled Type 2 Diabetes Trial (synthetic)",
+      "brief_title": "Controlled T2DM Trial",
+      "official_title": "A Synthetic Trial Requiring Documented HbA1c Control in Type 2 Diabetes",
+      "sponsor": "Synthetic Research Institute (fictional, development fixture only)",
+      "study_type": "Interventional",
+      "phase": "Phase 3",
+      "status": "recruiting",
+      "conditions": [{"name": "Type 2 diabetes mellitus", "code": "44054006", "system": "http://snomed.info/sct"}],
+      "interventions": [{"name": "Glycemic control protocol", "type": "Drug", "description": null}],
+      "eligibility": {
+        "minimum_age": 18,
+        "maximum_age": 80,
+        "sex": "all",
+        "inclusion_criteria": [
+          {"type": "observation_threshold", "label": "HbA1c", "code": "4548-4", "system": "http://loinc.org", "display": "Hemoglobin A1c", "operator": ">=", "value": 7.0, "unit": "%"}
+        ],
+        "exclusion_criteria": []
+      },
+      "locations": [{"facility": "Synthetic Research Site K", "city": "Lowell", "state": "MA", "country": "US", "recruiting_status": "recruiting"}],
+      "source": "synthetic_dev_fixture",
+      "source_id": "DEV-TRIAL-011",
+      "source_url": null,
+      "last_updated": "2026-01-01"
+    },
+    {
+      "trial_id": "DEV-TRIAL-012",
+      "title": "Elevated Glucose Screening Study (synthetic)",
+      "brief_title": "Elevated Glucose Screening",
+      "official_title": "A Synthetic Screening Study for Adults with Elevated Fasting Glucose",
+      "sponsor": "Synthetic Research Institute (fictional, development fixture only)",
+      "study_type": "Observational",
+      "phase": null,
+      "status": "recruiting",
+      "conditions": [],
+      "interventions": [],
+      "eligibility": {
+        "minimum_age": 18,
+        "maximum_age": null,
+        "sex": "all",
+        "inclusion_criteria": [
+          {"type": "observation_threshold", "label": "Glucose", "code": "2339-0", "system": "http://loinc.org", "display": "Glucose", "operator": ">=", "value": 100, "unit": "mg/dL"}
+        ],
+        "exclusion_criteria": []
+      },
+      "locations": [{"facility": "Synthetic Research Site L", "city": "Salem", "state": "MA", "country": "US", "recruiting_status": "recruiting"}],
+      "source": "synthetic_dev_fixture",
+      "source_id": "DEV-TRIAL-012",
+      "source_url": null,
+      "last_updated": "2026-01-01"
+    },
+    {
+      "trial_id": "DEV-TRIAL-013",
+      "title": "General Adult Employment & Wellness Cohort (synthetic)",
+      "brief_title": "Adult Employment Wellness Cohort",
+      "official_title": "A Synthetic Observational Cohort Study of Working-Age Adult Wellness",
+      "sponsor": "Synthetic Research Institute (fictional, development fixture only)",
+      "study_type": "Observational",
+      "phase": null,
+      "status": "recruiting",
+      "conditions": [],
+      "interventions": [],
+      "eligibility": {
+        "minimum_age": 18,
+        "maximum_age": 65,
+        "sex": "all",
+        "inclusion_criteria": [
+          {"type": "condition", "label": "Full-time employment", "code": "160903007", "system": "http://snomed.info/sct", "display": "Full-time employment (finding)"}
+        ],
+        "exclusion_criteria": []
+      },
+      "locations": [{"facility": "Synthetic Research Site M", "city": "Revere", "state": "MA", "country": "US", "recruiting_status": "recruiting"}],
+      "source": "synthetic_dev_fixture",
+      "source_id": "DEV-TRIAL-013",
+      "source_url": null,
+      "last_updated": "2026-01-01"
+    },
+    {
+      "trial_id": "DEV-TRIAL-014",
+      "title": "Closed Legacy Metabolic Study (synthetic)",
+      "brief_title": "Legacy Metabolic Study",
+      "official_title": "A Synthetic Closed-Enrollment Legacy Metabolic Study (No Longer Recruiting)",
+      "sponsor": "Synthetic Research Institute (fictional, development fixture only)",
+      "study_type": "Interventional",
+      "phase": "Phase 2",
+      "status": "completed",
+      "conditions": [{"name": "Prediabetes", "code": "15777000", "system": "http://snomed.info/sct"}],
+      "interventions": [{"name": "Metformin protocol", "type": "Drug", "description": null}],
+      "eligibility": {
+        "minimum_age": 18,
+        "maximum_age": null,
+        "sex": "all",
+        "inclusion_criteria": [
+          {"type": "condition", "label": "Prediabetes", "code": "15777000", "system": "http://snomed.info/sct", "display": "Prediabetes"}
+        ],
+        "exclusion_criteria": []
+      },
+      "locations": [{"facility": "Synthetic Research Site N", "city": "Chelsea", "state": "MA", "country": "US", "recruiting_status": "closed"}],
+      "source": "synthetic_dev_fixture",
+      "source_id": "DEV-TRIAL-014",
+      "source_url": null,
+      "last_updated": "2025-06-01"
+    },
+    {
+      "trial_id": "DEV-TRIAL-015",
+      "title": "Comprehensive Multi-Criteria Metabolic Syndrome Trial (synthetic)",
+      "brief_title": "Metabolic Syndrome Multi-Criteria Trial",
+      "official_title": "A Synthetic Trial Combining Multiple Structured Inclusion and Exclusion Criteria for Metabolic Syndrome",
+      "sponsor": "Synthetic Research Institute (fictional, development fixture only)",
+      "study_type": "Interventional",
+      "phase": "Phase 3",
+      "status": "recruiting",
+      "conditions": [{"name": "Prediabetes", "code": "15777000", "system": "http://snomed.info/sct"}],
+      "interventions": [{"name": "Combined metabolic intervention", "type": "Drug", "description": null}],
+      "eligibility": {
+        "minimum_age": 30,
+        "maximum_age": 75,
+        "sex": "all",
+        "inclusion_criteria": [
+          {"type": "condition", "label": "Prediabetes", "code": "15777000", "system": "http://snomed.info/sct", "display": "Prediabetes"},
+          {"type": "observation_threshold", "label": "Body Mass Index", "code": "39156-5", "system": "http://loinc.org", "display": "Body Mass Index", "operator": ">=", "value": 25, "unit": "kg/m2"}
+        ],
+        "exclusion_criteria": [
+          {"type": "allergy", "label": "Penicillin", "code": "7984", "system": "http://www.nlm.nih.gov/research/umls/rxnorm", "display": "Penicillin V"},
+          {"type": "medication", "label": "Warfarin", "code": "855332", "system": "http://www.nlm.nih.gov/research/umls/rxnorm", "display": "Warfarin Sodium 5 MG Oral Tablet"}
+        ]
+      },
+      "locations": [{"facility": "Synthetic Research Site O", "city": "Everett", "state": "MA", "country": "US", "recruiting_status": "recruiting"}],
+      "source": "synthetic_dev_fixture",
+      "source_id": "DEV-TRIAL-015",
+      "source_url": null,
+      "last_updated": "2026-01-01"
+    },
+    {
+      "trial_id": "DEV-TRIAL-016",
+      "title": "Ultra-Restrictive Supercentenarian Study (synthetic)",
+      "brief_title": "Supercentenarian Study",
+      "official_title": "A Synthetic Observational Study Restricted to Supercentenarians (Age 120+)",
+      "sponsor": "Synthetic Research Institute (fictional, development fixture only)",
+      "study_type": "Observational",
+      "phase": null,
+      "status": "recruiting",
+      "conditions": [],
+      "interventions": [],
+      "eligibility": {
+        "minimum_age": 120,
+        "maximum_age": null,
+        "sex": "all",
+        "inclusion_criteria": [],
+        "exclusion_criteria": []
+      },
+      "locations": [{"facility": "Synthetic Research Site P", "city": "Framingham", "state": "MA", "country": "US", "recruiting_status": "recruiting"}],
+      "source": "synthetic_dev_fixture",
+      "source_id": "DEV-TRIAL-016",
+      "source_url": null,
+      "last_updated": "2026-01-01"
+    },
+    {
+      "trial_id": "DEV-TRIAL-017",
+      "title": "Universal Open Enrollment Wellness Registry (synthetic)",
+      "brief_title": "Universal Wellness Registry",
+      "official_title": "A Synthetic Open-Enrollment Observational Wellness Registry With No Clinical Restrictions",
+      "sponsor": "Synthetic Research Institute (fictional, development fixture only)",
+      "study_type": "Observational",
+      "phase": null,
+      "status": "recruiting",
+      "conditions": [],
+      "interventions": [],
+      "eligibility": {
+        "minimum_age": 0,
+        "maximum_age": 130,
+        "sex": "all",
+        "inclusion_criteria": [],
+        "exclusion_criteria": []
+      },
+      "locations": [{"facility": "Synthetic Research Site Q", "city": "Arlington", "state": "MA", "country": "US", "recruiting_status": "recruiting"}],
+      "source": "synthetic_dev_fixture",
+      "source_id": "DEV-TRIAL-017",
+      "source_url": null,
+      "last_updated": "2026-01-01"
+    }
+  ]
+}

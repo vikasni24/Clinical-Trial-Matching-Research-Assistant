@@ -1,0 +1,75 @@
+{
+  "_disclaimer": "SYNTHETIC/DEVELOPMENT DATA ONLY. Fictional test fixture trials, not real clinical trials.",
+  "trials": [
+    {
+      "trial_id": "MATCH-TRIAL-ELIGIBLE",
+      "title": "Hypertension Trial (test fixture)",
+      "status": "recruiting",
+      "eligibility": {
+        "minimum_age": 18,
+        "maximum_age": null,
+        "sex": "all",
+        "inclusion_criteria": [
+          {"type": "condition", "label": "Hypertension", "code": "38341003", "system": "http://snomed.info/sct", "display": "Hypertension"}
+        ],
+        "exclusion_criteria": []
+      }
+    },
+    {
+      "trial_id": "MATCH-TRIAL-INELIGIBLE",
+      "title": "Peanut-Free Study Drug Trial (test fixture)",
+      "status": "recruiting",
+      "eligibility": {
+        "minimum_age": 0,
+        "maximum_age": null,
+        "sex": "all",
+        "inclusion_criteria": [],
+        "exclusion_criteria": [
+          {"type": "allergy", "label": "Peanut allergy", "code": "91935009", "system": "http://snomed.info/sct", "display": "Peanut"}
+        ]
+      }
+    },
+    {
+      "trial_id": "MATCH-TRIAL-UNKNOWN",
+      "title": "Controlled Diabetes HbA1c Trial (test fixture)",
+      "status": "recruiting",
+      "eligibility": {
+        "minimum_age": 18,
+        "maximum_age": null,
+        "sex": "all",
+        "inclusion_criteria": [
+          {"type": "observation_threshold", "label": "HbA1c", "code": "4548-4", "system": "http://loinc.org", "display": "Hemoglobin A1c", "operator": ">=", "value": 7.0, "unit": "%"}
+        ],
+        "exclusion_criteria": []
+      }
+    },
+    {
+      "trial_id": "MATCH-TRIAL-COMPLETED",
+      "title": "Closed Hypertension Trial (test fixture)",
+      "status": "completed",
+      "eligibility": {
+        "minimum_age": 18,
+        "maximum_age": null,
+        "sex": "all",
+        "inclusion_criteria": [
+          {"type": "condition", "label": "Hypertension", "code": "38341003", "system": "http://snomed.info/sct", "display": "Hypertension"}
+        ],
+        "exclusion_criteria": []
+      }
+    },
+    {
+      "trial_id": "MATCH-TRIAL-DIABETES",
+      "title": "Type 2 Diabetes Registry (test fixture)",
+      "status": "recruiting",
+      "eligibility": {
+        "minimum_age": 0,
+        "maximum_age": null,
+        "sex": "all",
+        "inclusion_criteria": [
+          {"type": "condition", "label": "Diabetes", "code": "44054006", "system": "http://snomed.info/sct", "display": "Diabetes"}
+        ],
+        "exclusion_criteria": []
+      }
+    }
+  ]
+}

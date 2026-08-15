@@ -1,0 +1,10 @@
+{
+  "trials": [
+    {
+      "trial_id": "TEST-TRIAL-A",
+      "title": "Test Trial A",
+      "status": "recruiting",
+      "eligibility": {"minimum_age": 18, "maximum_age": null, "sex": "all", "inclusion_criteria": [], "exclusion_criteria": []}
+    }
+  ]
+}

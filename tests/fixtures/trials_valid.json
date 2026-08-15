@@ -1,0 +1,23 @@
+{
+  "_disclaimer": "SYNTHETIC/DEVELOPMENT DATA ONLY. Fictional test fixture trials, not real clinical trials.",
+  "trials": [
+    {
+      "trial_id": "TEST-TRIAL-A",
+      "title": "Test Trial A",
+      "status": "recruiting",
+      "conditions": [],
+      "interventions": [],
+      "eligibility": {"minimum_age": 18, "maximum_age": null, "sex": "all", "inclusion_criteria": [], "exclusion_criteria": []},
+      "locations": []
+    },
+    {
+      "trial_id": "TEST-TRIAL-B",
+      "title": "Test Trial B",
+      "status": "completed",
+      "conditions": [],
+      "interventions": [],
+      "eligibility": {"minimum_age": 0, "maximum_age": 17, "sex": "all", "inclusion_criteria": [], "exclusion_criteria": []},
+      "locations": []
+    }
+  ]
+}
