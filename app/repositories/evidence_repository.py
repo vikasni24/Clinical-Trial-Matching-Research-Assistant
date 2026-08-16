@@ -91,6 +91,49 @@ def _extract_value(data: dict[str, Any]) -> tuple[Optional[Any], Optional[str]]:
     return None, None
 
 
+def _extract_component_summary(data: dict[str, Any]) -> Optional[str]:
+    """Phase 11B-1: FHIR panel-style Observations (e.g. Blood Pressure,
+    LOINC 85354-9) carry no top-level value[x] at all — the actual
+    measurements live in `component[].valueQuantity`, one per sub-reading
+    (e.g. Systolic 8480-6 / Diastolic 8462-4). `_extract_value` above never
+    looks there, so these were previously silently dropped (Evidence.value
+    stayed None even though real, stored values existed).
+
+    This deterministically builds a single human-readable, LOINC-labeled
+    summary string from each component's own code/display + valueQuantity
+    — e.g. "Systolic Blood Pressure: 125 mm[Hg]; Diastolic Blood Pressure:
+    85 mm[Hg]" — so systolic and diastolic (or any other panel's
+    components) stay distinguishable from each other within the existing
+    Evidence.value field. Only ever reads component code/display/
+    valueQuantity/valueCodeableConcept/valueString — the same class of
+    fields already extracted elsewhere in this module; never the raw FHIR
+    document itself, and no new Evidence field is introduced."""
+    components = data.get("component")
+    if not isinstance(components, list):
+        return None
+
+    parts: list[str] = []
+    for component in components:
+        if not isinstance(component, dict):
+            continue
+        code_field = component.get("code") or {}
+        coding = _first_coding(code_field)
+        label = code_field.get("text") or coding.get("display") or coding.get("code")
+
+        quantity = component.get("valueQuantity")
+        if isinstance(quantity, dict) and quantity.get("value") is not None:
+            value_text = str(quantity["value"])
+            if quantity.get("unit"):
+                value_text += f" {quantity['unit']}"
+        else:
+            value_text = _coded_text(component.get("valueCodeableConcept")) or component.get("valueString")
+
+        if label and value_text:
+            parts.append(f"{label}: {value_text}")
+
+    return "; ".join(parts) if parts else None
+
+
 def _extract_code_fields(data: dict[str, Any], resource_type: str) -> tuple[Optional[str], Optional[str], Optional[str]]:
     """Returns (code, coding_system, display) from the resource's primary
     CodeableConcept, whichever field that lives under for this resource type."""
@@ -131,6 +174,10 @@ def _document_to_evidence(document: dict[str, Any]) -> Evidence:
     elif resource_type == "Observation":
         code, coding_system, display = _extract_code_fields(data, resource_type)
         value, unit = _extract_value(data)
+        if value is None:
+            # No top-level value[x] — check for a panel/component structure
+            # (e.g. Blood Pressure) before leaving this genuinely unset.
+            value = _extract_component_summary(data)
         effective_date = data.get("effectiveDateTime")
         status = data.get("status")
 
@@ -185,6 +232,27 @@ def _document_to_evidence(document: dict[str, Any]) -> Evidence:
     )
 
 
+def _build_query(patient_id: str, resource_type: Optional[str] = None, code: Optional[str] = None) -> dict[str, Any]:
+    """The shared patient-scoped Mongo filter used by every evidence query
+    below. When `code` is given: if resource_type is also known, the single
+    corresponding coding path (e.g. `data.medicationCodeableConcept.coding.code`
+    for MedicationRequest) is queried directly; otherwise every known coding
+    path is checked via $or — still always scoped to this patient only."""
+    query: dict[str, Any] = {"patient_id": patient_id}
+    if resource_type:
+        query["resource_type"] = resource_type
+
+    if code:
+        if resource_type:
+            code_path = _CODE_PATH_BY_RESOURCE_TYPE.get(resource_type, "data.code.coding.code")
+            query[code_path] = code
+        else:
+            distinct_paths = sorted(set(_CODE_PATH_BY_RESOURCE_TYPE.values()))
+            query["$or"] = [{path: code} for path in distinct_paths]
+
+    return query
+
+
 def get_patient_evidence(db: Database, patient_id: str, resource_type: Optional[str] = None) -> Iterator[Evidence]:
     """Lazily yields Evidence for every one of a patient's FHIR resources,
     optionally filtered to a single resource_type. Scoped by patient_id (and
@@ -192,10 +260,7 @@ def get_patient_evidence(db: Database, patient_id: str, resource_type: Optional[
     index — never touches another patient's resources or the full
     collection."""
     collection = db[FHIR_RESOURCES_COLLECTION]
-    query: dict[str, Any] = {"patient_id": patient_id}
-    if resource_type:
-        query["resource_type"] = resource_type
-
+    query = _build_query(patient_id, resource_type=resource_type)
     for document in collection.find(query, _EVIDENCE_PROJECTION):
         yield _document_to_evidence(document)
 
@@ -209,24 +274,40 @@ def get_patient_evidence_by_code(
     db: Database, patient_id: str, code: str, resource_type: Optional[str] = None
 ) -> Iterator[Evidence]:
     """Lazily yields Evidence for a patient's resources whose primary coding
-    contains the given code. Filtering happens entirely in MongoDB: when
-    resource_type is given, the corresponding known coding path (e.g.
-    `data.medicationCodeableConcept.coding.code` for MedicationRequest) is
-    queried directly; otherwise every known coding path is checked via $or,
-    still scoped to this patient only."""
+    contains the given code. Filtering happens entirely in MongoDB."""
     collection = db[FHIR_RESOURCES_COLLECTION]
-    query: dict[str, Any] = {"patient_id": patient_id}
-
-    if resource_type:
-        query["resource_type"] = resource_type
-        code_path = _CODE_PATH_BY_RESOURCE_TYPE.get(resource_type, "data.code.coding.code")
-        query[code_path] = code
-    else:
-        distinct_paths = sorted(set(_CODE_PATH_BY_RESOURCE_TYPE.values()))
-        query["$or"] = [{path: code} for path in distinct_paths]
-
+    query = _build_query(patient_id, resource_type=resource_type, code=code)
     for document in collection.find(query, _EVIDENCE_PROJECTION):
         yield _document_to_evidence(document)
+
+
+def list_patient_evidence(
+    db: Database,
+    patient_id: str,
+    resource_type: Optional[str] = None,
+    code: Optional[str] = None,
+    page: int = 1,
+    page_size: int = 20,
+) -> tuple[list[Evidence], int]:
+    """Paginated Evidence retrieval for API browsing. Unlike the
+    generator-based functions above (meant for internal bulk/streaming
+    use, e.g. by the eligibility matcher), this is for a single page of
+    results and uses MongoDB-side skip/limit — mirrors the existing
+    fhir_repository.list_patient_resources pattern exactly, so only
+    page_size documents are ever transferred, never the full result set."""
+    collection = db[FHIR_RESOURCES_COLLECTION]
+    query = _build_query(patient_id, resource_type=resource_type, code=code)
+
+    skip = (page - 1) * page_size
+    total = collection.count_documents(query)
+    cursor = (
+        collection.find(query, _EVIDENCE_PROJECTION)
+        .sort([("resource_type", 1), ("resource_id", 1)])
+        .skip(skip)
+        .limit(page_size)
+    )
+    items = [_document_to_evidence(document) for document in cursor]
+    return items, total
 
 
 def get_patient_resource_evidence(

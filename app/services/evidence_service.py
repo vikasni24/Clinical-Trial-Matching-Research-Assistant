@@ -55,3 +55,18 @@ class EvidenceService:
         """A single resource's evidence, scoped to exactly this patient.
         None if no such resource exists for this patient."""
         return evidence_repository.get_patient_resource_evidence(self.db, patient_id, resource_type, resource_id)
+
+    def list_patient_evidence(
+        self,
+        patient_id: str,
+        resource_type: Optional[str] = None,
+        code: Optional[str] = None,
+        page: int = 1,
+        page_size: int = 20,
+    ) -> tuple[list[Evidence], int]:
+        """A single page of a patient's evidence, for API browsing (see
+        GET /api/patients/{id}/evidence) — never materializes more than
+        page_size documents. Returns (items, total_matching_count)."""
+        return evidence_repository.list_patient_evidence(
+            self.db, patient_id, resource_type=resource_type, code=code, page=page, page_size=page_size
+        )

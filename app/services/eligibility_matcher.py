@@ -28,6 +28,19 @@ confident FAIL (for inclusion) — not UNKNOWN. Observations are different:
 a lab test may simply never have been ordered, so a missing observation of
 the required type is UNKNOWN, matching the Phase 3 spec's own example
 (missing HbA1c -> UNKNOWN, not INELIGIBLE).
+
+EVIDENCE (Phase 4D): the PASS/FAIL/UNKNOWN decision itself is still made
+entirely from the already-normalized PatientProfile, exactly as above —
+that logic is unchanged. Separately, when a criterion's decision was
+backed by a specific FHIR resource (a matched Condition/Observation/
+MedicationRequest/AllergyIntolerance, or the Patient resource for
+age/sex), an optional EvidenceService is used to fetch a traceable
+Evidence record for it via a single targeted, patient-scoped lookup
+(EvidenceService -> EvidenceRepository -> MongoDB `fhir_resources`) and
+attach it to that CriterionEvaluationOut. The matcher never queries
+MongoDB itself. If no EvidenceService is supplied (the default), the
+matcher behaves exactly as before Phase 4D — evidence lists are simply
+empty; nothing else changes.
 """
 
 from __future__ import annotations
@@ -36,8 +49,37 @@ from datetime import date, datetime, timezone
 from typing import Any, Optional
 
 from app.models.clinical_trial import ClinicalTrialOut, EligibilityCriterionOut
+from app.models.evidence import Evidence
 from app.models.match_result import CriterionEvaluationOut, MatchResultOut
 from app.models.patient_profile import PatientProfileOut
+from app.services.evidence_service import EvidenceService
+
+# Which FHIR resource_type backs each structured criterion type — used only
+# to look up traceability evidence for a criterion that already matched;
+# never used to make the PASS/FAIL/UNKNOWN decision itself.
+_RESOURCE_TYPE_BY_CRITERION_TYPE = {
+    "condition": "Condition",
+    "medication": "MedicationRequest",
+    "allergy": "AllergyIntolerance",
+    "observation_threshold": "Observation",
+}
+
+
+def _fetch_evidence(
+    patient_id: str,
+    resource_type: Optional[str],
+    resource_id: Optional[str],
+    evidence_service: Optional[EvidenceService],
+) -> list[Evidence]:
+    """A single targeted, patient-scoped lookup for traceability — never a
+    scan, never touches MongoDB directly (goes through EvidenceService).
+    Empty whenever there's no evidence_service, or no concrete resource
+    backing this evaluation (e.g. UNKNOWN, or a FAIL because nothing
+    matched)."""
+    if evidence_service is None or resource_type is None or resource_id is None:
+        return []
+    evidence = evidence_service.get_patient_resource_evidence(patient_id, resource_type, resource_id)
+    return [evidence] if evidence is not None else []
 
 _OPERATORS = {
     ">=": lambda a, b: a >= b,
@@ -59,7 +101,14 @@ def _calculate_age(date_of_birth: Optional[str]) -> Optional[int]:
     return today.year - year - ((today.month, today.day) < (month, day))
 
 
-def _age_criterion(age: Optional[int], symbol: str, threshold: int, comparator) -> CriterionEvaluationOut:
+def _age_criterion(
+    age: Optional[int],
+    symbol: str,
+    threshold: int,
+    comparator,
+    patient_id: str,
+    evidence_service: Optional[EvidenceService],
+) -> CriterionEvaluationOut:
     criterion_label = f"Age {symbol} {threshold}"
     if age is None:
         return CriterionEvaluationOut(
@@ -71,6 +120,9 @@ def _age_criterion(age: Optional[int], symbol: str, threshold: int, comparator) 
             required_value=f"{symbol} {threshold}",
             reason="Patient date of birth is not recorded",
         )
+    # Age is derived from the Patient resource's birthDate, so that resource
+    # is the evidence backing this evaluation whenever age is known.
+    evidence = _fetch_evidence(patient_id, "Patient", patient_id, evidence_service)
     return CriterionEvaluationOut(
         criterion=criterion_label,
         category="demographics",
@@ -79,22 +131,33 @@ def _age_criterion(age: Optional[int], symbol: str, threshold: int, comparator) 
         patient_value=age,
         required_value=f"{symbol} {threshold}",
         reason=f"Patient age is {age}",
+        evidence=evidence,
     )
 
 
-def _evaluate_age(profile: PatientProfileOut, trial: ClinicalTrialOut) -> list[CriterionEvaluationOut]:
+def _evaluate_age(
+    profile: PatientProfileOut,
+    trial: ClinicalTrialOut,
+    patient_id: str,
+    evidence_service: Optional[EvidenceService],
+) -> list[CriterionEvaluationOut]:
     eligibility = trial.eligibility
     age = _calculate_age(profile.demographics.date_of_birth)
 
     evaluations: list[CriterionEvaluationOut] = []
     if eligibility.minimum_age is not None:
-        evaluations.append(_age_criterion(age, ">=", eligibility.minimum_age, _OPERATORS[">="]))
+        evaluations.append(_age_criterion(age, ">=", eligibility.minimum_age, _OPERATORS[">="], patient_id, evidence_service))
     if eligibility.maximum_age is not None:
-        evaluations.append(_age_criterion(age, "<=", eligibility.maximum_age, _OPERATORS["<="]))
+        evaluations.append(_age_criterion(age, "<=", eligibility.maximum_age, _OPERATORS["<="], patient_id, evidence_service))
     return evaluations
 
 
-def _evaluate_sex(profile: PatientProfileOut, trial: ClinicalTrialOut) -> Optional[CriterionEvaluationOut]:
+def _evaluate_sex(
+    profile: PatientProfileOut,
+    trial: ClinicalTrialOut,
+    patient_id: str,
+    evidence_service: Optional[EvidenceService],
+) -> Optional[CriterionEvaluationOut]:
     required_sex = trial.eligibility.sex
     if not required_sex or required_sex.lower() == "all":
         return None
@@ -112,6 +175,9 @@ def _evaluate_sex(profile: PatientProfileOut, trial: ClinicalTrialOut) -> Option
         )
 
     passed = gender.lower() == required_sex.lower()
+    # Gender is derived from the Patient resource, so that resource is the
+    # evidence backing this evaluation whenever gender is known.
+    evidence = _fetch_evidence(patient_id, "Patient", patient_id, evidence_service)
     return CriterionEvaluationOut(
         criterion=f"Sex == {required_sex}",
         category="demographics",
@@ -120,6 +186,7 @@ def _evaluate_sex(profile: PatientProfileOut, trial: ClinicalTrialOut) -> Option
         patient_value=gender,
         required_value=required_sex,
         reason=f"Patient sex is '{gender}'",
+        evidence=evidence,
     )
 
 
@@ -137,9 +204,23 @@ def _matches_coded_item(item: Any, criterion: EligibilityCriterionOut, display_a
     return False
 
 
-def _condition_met(profile: PatientProfileOut, criterion: EligibilityCriterionOut) -> Optional[bool]:
-    """Returns True/False (the underlying fact is present/absent in the
-    patient's complete recorded data) or None (cannot be determined).
+def _find_matching_item(items: list[Any], criterion: EligibilityCriterionOut, display_attr: str) -> Optional[Any]:
+    for item in items:
+        if _matches_coded_item(item, criterion, display_attr):
+            return item
+    return None
+
+
+def _condition_met(profile: PatientProfileOut, criterion: EligibilityCriterionOut) -> tuple[Optional[bool], Optional[Any]]:
+    """Returns (condition_met, matched_item).
+
+    condition_met is True/False (the underlying fact is present/absent in
+    the patient's complete recorded data) or None (cannot be determined) —
+    this is the exact same decision as before Phase 4D, unchanged.
+
+    matched_item is the specific ConditionOut/MedicationOut/AllergyOut/
+    ObservationOut that was found (carrying its resource_id, for evidence
+    traceability), or None when nothing was found/matched.
 
     A condition/medication/allergy criterion with neither a `code` nor a
     `display` carries no identifying information at all — it can never be
@@ -148,19 +229,24 @@ def _condition_met(profile: PatientProfileOut, criterion: EligibilityCriterionOu
     doesn't have on record, which IS a confident FAIL (see module docstring)."""
     if criterion.type == "condition":
         if not criterion.code and not criterion.display:
-            return None
-        return any(_matches_coded_item(c, criterion, "display") for c in profile.conditions)
+            return None, None
+        item = _find_matching_item(profile.conditions, criterion, "display")
+        return item is not None, item
     if criterion.type == "medication":
         if not criterion.code and not criterion.display:
-            return None
-        return any(_matches_coded_item(m, criterion, "medication_name") for m in profile.medications)
+            return None, None
+        item = _find_matching_item(profile.medications, criterion, "medication_name")
+        return item is not None, item
     if criterion.type == "allergy":
         if not criterion.code and not criterion.display:
-            return None
-        return any(_matches_coded_item(a, criterion, "substance") for a in profile.allergies)
+            return None, None
+        item = _find_matching_item(profile.allergies, criterion, "substance")
+        return item is not None, item
     if criterion.type == "observation_threshold":
-        return _observation_threshold_met(profile, criterion)
-    return None
+        met = _observation_threshold_met(profile, criterion)
+        item = _latest_matching_observation(profile, criterion)
+        return met, item
+    return None, None
 
 
 def _latest_matching_observation(profile: PatientProfileOut, criterion: EligibilityCriterionOut) -> Optional[Any]:
@@ -213,17 +299,23 @@ _CATEGORY_BY_TYPE = {
 
 
 def _evaluate_structured_criterion(
-    profile: PatientProfileOut, criterion: EligibilityCriterionOut, requirement: str
+    profile: PatientProfileOut,
+    criterion: EligibilityCriterionOut,
+    requirement: str,
+    patient_id: str,
+    evidence_service: Optional[EvidenceService],
 ) -> CriterionEvaluationOut:
-    condition_met = _condition_met(profile, criterion)
+    condition_met, matched_item = _condition_met(profile, criterion)
     result = _requirement_result(condition_met, requirement)
     category = _CATEGORY_BY_TYPE.get(criterion.type, criterion.type)
+    resource_type = _RESOURCE_TYPE_BY_CRITERION_TYPE.get(criterion.type)
+    resource_id = getattr(matched_item, "resource_id", None)
+    evidence = _fetch_evidence(patient_id, resource_type, resource_id, evidence_service)
 
     if criterion.type == "observation_threshold":
         required_value = f"{criterion.operator} {criterion.value}" + (f" {criterion.unit}" if criterion.unit else "")
-        latest_observation = _latest_matching_observation(profile, criterion)
-        value = latest_observation.value if latest_observation else None
-        unit = latest_observation.unit if latest_observation else None
+        value = matched_item.value if matched_item else None
+        unit = matched_item.unit if matched_item else None
         if condition_met is None:
             reason = f"No '{criterion.label}' observation is available for this patient"
         else:
@@ -236,6 +328,7 @@ def _evaluate_structured_criterion(
             patient_value=value,
             required_value=required_value,
             reason=reason,
+            evidence=evidence,
         )
 
     presence_noun = {"condition": "condition", "medication": "medication", "allergy": "allergy"}.get(
@@ -260,6 +353,7 @@ def _evaluate_structured_criterion(
         patient_value=patient_value,
         required_value=required_value,
         reason=reason,
+        evidence=evidence,
     )
 
 
@@ -283,21 +377,35 @@ def _build_explanation(
 
 
 class EligibilityMatcher:
-    """Stateless deterministic evaluator: same PatientProfile + same
-    ClinicalTrial always produces the same MatchResult."""
+    """Deterministic evaluator: same PatientProfile + same ClinicalTrial +
+    same MongoDB state always produces the same MatchResult.
+
+    evidence_service is optional. When supplied (see TrialMatchingService),
+    each criterion evaluation that was backed by a specific FHIR resource
+    gets a traceable Evidence record attached via a single targeted lookup.
+    When omitted (the default), the matcher behaves exactly as it did
+    before Phase 4D — decision logic is identical either way."""
+
+    def __init__(self, evidence_service: Optional[EvidenceService] = None):
+        self._evidence_service = evidence_service
 
     def evaluate(self, profile: PatientProfileOut, trial: ClinicalTrialOut) -> MatchResultOut:
+        patient_id = profile.patient_id
         evaluations: list[CriterionEvaluationOut] = []
 
-        evaluations.extend(_evaluate_age(profile, trial))
-        sex_evaluation = _evaluate_sex(profile, trial)
+        evaluations.extend(_evaluate_age(profile, trial, patient_id, self._evidence_service))
+        sex_evaluation = _evaluate_sex(profile, trial, patient_id, self._evidence_service)
         if sex_evaluation is not None:
             evaluations.append(sex_evaluation)
 
         for criterion in trial.eligibility.inclusion_criteria:
-            evaluations.append(_evaluate_structured_criterion(profile, criterion, "inclusion"))
+            evaluations.append(
+                _evaluate_structured_criterion(profile, criterion, "inclusion", patient_id, self._evidence_service)
+            )
         for criterion in trial.eligibility.exclusion_criteria:
-            evaluations.append(_evaluate_structured_criterion(profile, criterion, "exclusion"))
+            evaluations.append(
+                _evaluate_structured_criterion(profile, criterion, "exclusion", patient_id, self._evidence_service)
+            )
 
         matched = [e for e in evaluations if e.result == "PASS"]
         failed = [e for e in evaluations if e.result == "FAIL"]

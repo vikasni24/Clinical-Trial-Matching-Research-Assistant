@@ -2,10 +2,12 @@ import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pymongo.errors import PyMongoError
 
 from app.api.routes import fhir, patients, trials
+from app.config import get_settings
 from app.db.mongodb import ensure_indexes, get_database
 
 logger = logging.getLogger(__name__)
@@ -30,6 +32,16 @@ app = FastAPI(
 app.include_router(patients.router)
 app.include_router(fhir.router)
 app.include_router(trials.router)
+
+# Frontend Phase 1: allow the local frontend dev server to call this API.
+# Origins are configurable (see Settings.cors_allowed_origins) and default
+# to Vite's own dev server ports only — no wildcard.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=get_settings().cors_allowed_origins,
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type"],
+)
 
 
 @app.exception_handler(PyMongoError)

@@ -14,6 +14,12 @@ retrieved via trial_repository.iter_candidate_trials, an indexed, lazily
 — trial documents are evaluated and converted to MatchResultOut one at a
 time rather than the full candidate set being materialized into memory up
 front. This lets the trial catalog grow independently of matcher memory use.
+
+EVIDENCE (Phase 4D): the matcher is constructed with an EvidenceService
+bound to this same `db`, so criterion evaluations can attach traceable
+Evidence (see app/services/eligibility_matcher.py). This adds a small,
+bounded number of additional targeted MongoDB lookups per match — one per
+criterion that a specific resource backed — never a collection scan.
 """
 
 from __future__ import annotations
@@ -27,6 +33,7 @@ from app.models.match_result import MatchResultOut
 from app.models.patient_profile import PatientProfileOut
 from app.repositories import patient_profile_repository, trial_repository
 from app.services.eligibility_matcher import EligibilityMatcher
+from app.services.evidence_service import EvidenceService
 
 DEFAULT_CANDIDATE_STATUS = "recruiting"
 
@@ -37,7 +44,7 @@ _STATUS_RANK = {"ELIGIBLE": 0, "UNKNOWN": 1, "INELIGIBLE": 2}
 class TrialMatchingService:
     def __init__(self, db: Database):
         self.db = db
-        self._matcher = EligibilityMatcher()
+        self._matcher = EligibilityMatcher(evidence_service=EvidenceService(db))
 
     def match_patient_to_trial(self, patient_id: str, trial_id: str) -> Optional[MatchResultOut]:
         """Evaluate one patient against one trial. Returns None if either

@@ -9,6 +9,8 @@ from typing import Any, Optional
 
 from pydantic import BaseModel
 
+from app.models.evidence import Evidence
+
 
 class CriterionEvaluationOut(BaseModel):
     criterion: str
@@ -18,6 +20,11 @@ class CriterionEvaluationOut(BaseModel):
     patient_value: Optional[Any] = None
     required_value: Optional[str] = None
     reason: str
+    # The specific FHIR-derived fact(s) this evaluation is traceable to, via
+    # EvidenceService — populated only when a concrete resource backed the
+    # decision (never for UNKNOWN, since by definition nothing was found).
+    # Never contains a raw FHIR document, only the lightweight Evidence view.
+    evidence: list[Evidence] = []
 
 
 class MatchResultOut(BaseModel):

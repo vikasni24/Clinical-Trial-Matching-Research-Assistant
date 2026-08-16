@@ -19,6 +19,8 @@ from typing import Any, Optional
 
 from pydantic import BaseModel, Field, model_validator
 
+from app.models.schemas import PaginationMeta
+
 
 class Evidence(BaseModel):
     # --- traceability back to the source FHIR resource (required) ---
@@ -45,3 +47,8 @@ class Evidence(BaseModel):
         if not self.source_reference:
             self.source_reference = f"{self.resource_type}/{self.resource_id}"
         return self
+
+
+class EvidenceListOut(BaseModel):
+    items: list[Evidence]
+    pagination: PaginationMeta

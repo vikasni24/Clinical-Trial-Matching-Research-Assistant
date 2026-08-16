@@ -1,6 +1,7 @@
 """Application configuration loaded from environment variables / .env file."""
 
 from functools import lru_cache
+from typing import Optional
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -13,6 +14,20 @@ class Settings(BaseSettings):
 
     default_page_size: int = 20
     max_page_size: int = 100
+
+    # Frontend Phase 1: origins allowed to call this API via CORS (see
+    # app/main.py). Defaults cover Vite's default dev server ports only —
+    # never a wildcard, and never something that also allows credentials
+    # from an untrusted origin.
+    cors_allowed_origins: list[str] = ["http://localhost:5173", "http://127.0.0.1:5173"]
+
+    # LLM provider configuration (Phase 6D). llm_api_key has no default —
+    # it must come from the environment and is never hardcoded. The
+    # concrete provider (app/services/anthropic_llm_provider.py) fails
+    # fast at construction time if it's missing.
+    llm_api_key: Optional[str] = None
+    llm_model: str = "claude-haiku-4-5-20251001"
+    llm_timeout_seconds: float = 30.0
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

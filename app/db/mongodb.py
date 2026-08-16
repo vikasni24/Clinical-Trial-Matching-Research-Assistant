@@ -11,6 +11,7 @@ FHIR_RESOURCES_COLLECTION = "fhir_resources"
 PATIENTS_COLLECTION = "patients"
 PATIENT_PROFILES_COLLECTION = "patient_profiles"
 CLINICAL_TRIALS_COLLECTION = "clinical_trials"
+AUDIT_RECORDS_COLLECTION = "audit_records"
 
 
 @lru_cache
@@ -50,3 +51,13 @@ def ensure_indexes(db: Database) -> None:
     clinical_trials.create_index("trial_id", unique=True, name="uniq_trial_id")
     clinical_trials.create_index("status", name="idx_trial_status")
     clinical_trials.create_index("conditions.name", name="idx_trial_conditions")
+
+    # Phase 7: audit history is always queried patient-scoped and sorted
+    # newest-first (see app/repositories/audit_repository.py) — one
+    # compound index serves both, and is the only index this collection
+    # needs.
+    audit_records = db[AUDIT_RECORDS_COLLECTION]
+    audit_records.create_index(
+        [("patient_id", 1), ("created_at", -1)],
+        name="idx_patient_created_at",
+    )
