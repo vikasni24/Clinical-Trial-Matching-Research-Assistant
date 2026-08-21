@@ -52,4 +52,14 @@ async def mongo_error_handler(request: Request, exc: PyMongoError) -> JSONRespon
 
 @app.get("/health")
 def health_check() -> dict:
-    return {"status": "ok"}
+    """Liveness check. Also reports whether an LLM provider is configured
+    — a plain boolean plus the (non-secret) provider name, e.g. "groq" or
+    "anthropic" — so the frontend can show a real AI Assistant status
+    instead of guessing. The API key itself is never read here beyond a
+    truthiness check, and is never included in the response."""
+    settings = get_settings()
+    return {
+        "status": "ok",
+        "llm_configured": bool(settings.llm_api_key),
+        "llm_provider": settings.llm_provider,
+    }

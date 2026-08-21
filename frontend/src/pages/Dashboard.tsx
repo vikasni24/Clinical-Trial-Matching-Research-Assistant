@@ -6,10 +6,24 @@ import { getHealth } from "../api/system";
 import { useScopedQuery } from "../hooks/useScopedQuery";
 import { SkeletonRows } from "../components/common/LoadingState";
 import { ErrorBlock } from "../components/common/ErrorState";
-import { IconAssistant, IconDashboard, IconPatients, IconPulse, IconTrials } from "../components/common/Icons";
+import {
+  IconAssistant,
+  IconAudit,
+  IconChevronRight,
+  IconDashboard,
+  IconPatients,
+  IconPulse,
+  IconSearch,
+  IconTrials,
+} from "../components/common/Icons";
 import { TrialStatusChart, type TrialStatusDatum } from "../components/charts/TrialStatusChart";
+import { TrialPhaseChart, type TrialPhaseDatum } from "../components/charts/TrialPhaseChart";
 
 const TRIAL_STATUSES = ["recruiting", "active", "completed", "closed"];
+
+// Only 17 trials exist in the real dataset — one bounded fetch of the whole
+// catalog, tallied client-side, since GET /api/trials has no phase filter.
+const TRIAL_CATALOG_PAGE_SIZE = 200;
 
 function useTrialStatusBreakdown() {
   return useScopedQuery("dashboard-trial-status-breakdown", async () => {
@@ -22,6 +36,21 @@ function useTrialStatusBreakdown() {
   });
 }
 
+function useTrialPhaseBreakdown() {
+  return useScopedQuery("dashboard-trial-phase-breakdown", async () => {
+    const catalog = await listTrials(1, TRIAL_CATALOG_PAGE_SIZE);
+    const counts = new Map<string, number>();
+    for (const trial of catalog.items) {
+      const label = trial.phase?.trim() || "Unspecified";
+      counts.set(label, (counts.get(label) ?? 0) + 1);
+    }
+    const data: TrialPhaseDatum[] = Array.from(counts.entries())
+      .map(([phase, count]) => ({ phase, count }))
+      .sort((a, b) => b.count - a.count);
+    return data;
+  });
+}
+
 export function Dashboard() {
   const navigate = useNavigate();
   const [patientIdInput, setPatientIdInput] = useState("");
@@ -30,6 +59,7 @@ export function Dashboard() {
   const trialTotals = useScopedQuery("dashboard-trials", () => listTrials(1, 1));
   const health = useScopedQuery("dashboard-health", getHealth);
   const trialBreakdown = useTrialStatusBreakdown();
+  const phaseBreakdown = useTrialPhaseBreakdown();
 
   function goToPatient(destination: "" | "matching" | "assistant" | "audit") {
     const id = patientIdInput.trim();
@@ -40,10 +70,18 @@ export function Dashboard() {
 
   return (
     <div>
-      <div className="app-topbar">
-        <div className="page-header-text">
-          <h1>Command Center</h1>
-          <p>Real-time overview of the clinical trial matching and research assistant system.</p>
+      <div className="hero-panel">
+        <div className="hero-eyebrow">Clinical Intelligence Platform</div>
+        <h1 className="hero-title">Command Center</h1>
+        <p className="hero-subtitle">Patient evidence → trial matching → grounded research insights, every claim traceable back to source data.</p>
+        <div className="hero-pipeline">
+          <span className="hero-pipeline-step"><IconPulse /> FHIR evidence</span>
+          <span className="hero-pipeline-arrow"><IconChevronRight /></span>
+          <span className="hero-pipeline-step"><IconTrials /> Trial matching</span>
+          <span className="hero-pipeline-arrow"><IconChevronRight /></span>
+          <span className="hero-pipeline-step"><IconAssistant /> Research assistant</span>
+          <span className="hero-pipeline-arrow"><IconChevronRight /></span>
+          <span className="hero-pipeline-step"><IconAudit /> Audit trail</span>
         </div>
       </div>
 
@@ -78,17 +116,25 @@ export function Dashboard() {
         />
         <KpiCard
           icon={<IconAssistant />}
-          accent="gray"
+          accent={health.data?.llm_configured ? "green" : "gray"}
           label="AI Assistant"
-          value="NOT VERIFIED"
-          loading={false}
-          error={false}
-          hint="Configuration status isn't exposed by any endpoint"
-          valueTone="neutral"
+          value={
+            health.loading
+              ? null
+              : health.error
+                ? null
+                : health.data?.llm_configured
+                  ? `READY (${health.data.llm_provider ?? "configured"})`
+                  : "NOT CONFIGURED"
+          }
+          loading={health.loading}
+          error={!!health.error}
+          hint={health.data?.llm_configured ? "GET /health · llm_configured" : "No LLM_API_KEY configured on the backend"}
+          valueTone={health.data?.llm_configured ? "success" : "neutral"}
         />
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 16, alignItems: "start", marginBottom: 20 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, alignItems: "start", marginBottom: 16 }}>
         <div className="card card-padded">
           <h3>Trial status distribution</h3>
           <p className="text-faint" style={{ fontSize: 12, marginTop: 4 }}>
@@ -105,13 +151,44 @@ export function Dashboard() {
         </div>
 
         <div className="card card-padded">
-          <h3>Quick patient lookup</h3>
-          <p className="text-faint" style={{ fontSize: 12, marginTop: 4, marginBottom: 14 }}>
-            Jump directly to a patient's record, trial matching, research assistant, or audit history.
+          <h3>Trial phase distribution</h3>
+          <p className="text-faint" style={{ fontSize: 12, marginTop: 4 }}>
+            Live counts per study phase, across the full trial catalog.
           </p>
-          <div style={{ display: "flex", gap: 8 }}>
+          <div style={{ marginTop: 10 }}>
+            {phaseBreakdown.loading && <SkeletonRows rows={4} height={26} />}
+            {phaseBreakdown.error && <ErrorBlock error={phaseBreakdown.error} />}
+            {phaseBreakdown.data && phaseBreakdown.data.length === 0 && (
+              <p className="text-muted" style={{ fontSize: 13 }}>No trials ingested yet.</p>
+            )}
+            {phaseBreakdown.data && phaseBreakdown.data.length > 0 && <TrialPhaseChart data={phaseBreakdown.data} />}
+          </div>
+        </div>
+      </div>
+
+      <div className="card card-padded" style={{ marginBottom: 20 }}>
+        <h3>Quick patient lookup</h3>
+        <p className="text-faint" style={{ fontSize: 12, marginTop: 4, marginBottom: 14 }}>
+          Jump directly to a patient's record, trial matching, research assistant, or audit history.
+        </p>
+        <div style={{ display: "flex", gap: 8, maxWidth: 480 }}>
+          <div style={{ position: "relative", flex: 1 }}>
+            <span
+              style={{
+                position: "absolute",
+                left: 12,
+                top: "50%",
+                transform: "translateY(-50%)",
+                color: "var(--text-faint)",
+                display: "flex",
+                pointerEvents: "none",
+              }}
+            >
+              <IconSearch />
+            </span>
             <input
               className="input"
+              style={{ paddingLeft: 34, width: "100%" }}
               placeholder="Patient ID"
               value={patientIdInput}
               onChange={(e) => setPatientIdInput(e.target.value)}
@@ -119,23 +196,22 @@ export function Dashboard() {
                 if (e.key === "Enter") goToPatient("");
               }}
             />
-            <button type="button" className="btn btn-primary" onClick={() => goToPatient("")}>
-              Open
-            </button>
           </div>
-          <div className="pill-row" style={{ marginTop: 12 }}>
-            <button type="button" className="btn btn-secondary" onClick={() => goToPatient("matching")}>
-              Trial matching
-            </button>
-            <button type="button" className="btn btn-secondary" onClick={() => goToPatient("assistant")}>
-              Research assistant
-            </button>
-            <button type="button" className="btn btn-secondary" onClick={() => goToPatient("audit")}>
-              Audit history
-            </button>
-          </div>
-          <div className="divider" />
-          <button type="button" className="btn btn-ghost" style={{ width: "100%" }} onClick={() => navigate("/patients")}>
+          <button type="button" className="btn btn-primary" onClick={() => goToPatient("")}>
+            Open
+          </button>
+        </div>
+        <div className="pill-row" style={{ marginTop: 12 }}>
+          <button type="button" className="btn btn-secondary" onClick={() => goToPatient("matching")}>
+            <IconTrials /> Trial matching
+          </button>
+          <button type="button" className="btn btn-secondary" onClick={() => goToPatient("assistant")}>
+            <IconAssistant /> Research assistant
+          </button>
+          <button type="button" className="btn btn-secondary" onClick={() => goToPatient("audit")}>
+            <IconAudit /> Audit history
+          </button>
+          <button type="button" className="btn btn-ghost" onClick={() => navigate("/patients")}>
             <IconDashboard /> Browse all patients
           </button>
         </div>

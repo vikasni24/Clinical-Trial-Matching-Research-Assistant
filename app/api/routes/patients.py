@@ -27,6 +27,7 @@ from app.services.anthropic_llm_provider import (
 from app.services.ask_service import AskService
 from app.services.audit_service import AuditService
 from app.services.evidence_service import EvidenceService
+from app.services.groq_llm_provider import GroqLLMProvider
 from app.services.llm_provider import LLMProvider
 from app.services.trial_matching import TrialMatchingService
 
@@ -34,22 +35,33 @@ router = APIRouter(prefix="/api/patients", tags=["patients"])
 logger = logging.getLogger(__name__)
 
 
-class _LazyAnthropicLLMProvider:
-    """Defers constructing the real AnthropicLLMProvider — and therefore its
-    LLM_API_KEY configuration check — until generate() is actually called.
-    Without this, resolving the get_llm_provider dependency below would
-    fail every request (even ones that never need generation, e.g. an
-    unknown patient or an empty query) whenever no API key is configured."""
+class _LazyConfiguredLLMProvider:
+    """Defers constructing the real, configured LLM provider — and
+    therefore its LLM_API_KEY configuration check — until generate() is
+    actually called. Without this, resolving the get_llm_provider
+    dependency below would fail every request (even ones that never need
+    generation, e.g. an unknown patient or an empty query) whenever no API
+    key is configured. Which concrete provider gets constructed is
+    controlled entirely by Settings.llm_provider ("anthropic" or "groq")
+    — AskService itself never knows or cares which one it was given."""
 
     def generate(self, prompt: str) -> str:
-        return AnthropicLLMProvider().generate(prompt)
+        settings = get_settings()
+        provider_name = (settings.llm_provider or "anthropic").strip().lower()
+        if provider_name == "anthropic":
+            return AnthropicLLMProvider(settings=settings).generate(prompt)
+        if provider_name == "groq":
+            return GroqLLMProvider(settings=settings).generate(prompt)
+        raise LLMProviderConfigurationError(
+            f"Unknown LLM_PROVIDER '{settings.llm_provider}' — supported values are 'anthropic' and 'groq'"
+        )
 
 
 def get_llm_provider() -> LLMProvider:
     """FastAPI-dependency-friendly accessor for the configured LLM
     provider. Overridden in tests (see tests/test_api_ask.py) with a
     deterministic fake — a real LLM is never called from automated tests."""
-    return _LazyAnthropicLLMProvider()
+    return _LazyConfiguredLLMProvider()
 
 
 def _resolve_page_size(page_size: Optional[int]) -> int:

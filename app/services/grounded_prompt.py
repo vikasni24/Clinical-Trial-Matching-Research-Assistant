@@ -30,7 +30,14 @@ from app.models.retrieval import RetrievalStatus
 # only grounding, (2) no invented facts, (3) absence-of-evidence is not a
 # negative fact, (4) explicit insufficiency rather than guessing, (5) no
 # raw FHIR exposure, (6) citeable traceability, (7) patient isolation,
-# (8) no fabricated citations, (9) no unsupported certainty.
+# (8) no fabricated citations, (9) no unsupported certainty, (10) exact
+# citation syntax — added after live testing showed models that get every
+# clinical fact right can still fail answer_validator's citation check
+# purely on formatting (e.g. "(MedicationRequest/abc)" instead of
+# "[MedicationRequest/abc]", or a paraphrased resource_id) — spelling out
+# the exact required syntax is a clarification of directive 6, not a new
+# or weaker requirement: answer_validator.py's citation matching is
+# unchanged and still rejects anything that doesn't match it exactly.
 SAFETY_INSTRUCTIONS = (
     "You are a clinical evidence assistant. Follow these rules strictly:\n"
     "1. Use ONLY the evidence supplied below. Do not use any other knowledge about this patient.\n"
@@ -44,7 +51,11 @@ SAFETY_INSTRUCTIONS = (
     "resource_id.\n"
     "7. Never use or reference evidence belonging to a patient other than the one specified below.\n"
     "8. Do not fabricate citations, resource IDs, or evidence that was not supplied.\n"
-    "9. Do not state or imply certainty beyond what the supplied evidence actually supports."
+    "9. Do not state or imply certainty beyond what the supplied evidence actually supports.\n"
+    "10. Cite evidence using EXACTLY this format: [ResourceType/resource_id] — square brackets, a single "
+    "forward slash, no spaces, and the resource_id copied character-for-character from the evidence list "
+    "below (e.g. [MedicationRequest/abc-123]). Do not use parentheses or any other format, and do not alter, "
+    "abbreviate, retype, or paraphrase the resource_id in any way."
 )
 
 _NO_EVIDENCE_NOTE = (

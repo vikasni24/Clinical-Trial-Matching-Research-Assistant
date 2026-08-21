@@ -5,7 +5,6 @@ import { getPatientEvidence } from "../api/evidence";
 import { ApiError } from "../api/client";
 import { useScopedQuery } from "../hooks/useScopedQuery";
 import { AnswerStatusBadge } from "../components/common/StatusBadge";
-import { ErrorBlock } from "../components/common/ErrorState";
 import { EvidenceCardList } from "../components/evidence/EvidenceCard";
 import { IconAssistant } from "../components/common/Icons";
 import type { GroundedAnswer } from "../types/api";
@@ -19,6 +18,45 @@ const SUGGESTED_QUESTIONS = [
 ];
 
 const LOADING_PHASES = ["Retrieving patient evidence…", "Grounding response…", "Generating answer…"];
+
+/** Research-Assistant-specific framing of an ApiError. The shared
+ * ErrorBlock component stays generic for every other page; this page's
+ * failure modes are specific enough (LLM not configured vs. LLM request
+ * failed vs. backend unreachable) to deserve their own clear titles,
+ * without ever inventing detail the backend didn't actually provide, and
+ * never showing anything the backend wouldn't already consider safe to
+ * return (see app/api/routes/patients.py's own error handling). */
+function describeAskError(error: ApiError): { title: string; detail: string } {
+  if (error.kind === "network") {
+    return { title: "Unable to contact the research assistant service.", detail: error.message };
+  }
+  if (error.status === 500) {
+    return {
+      title: "AI answer generation is not configured.",
+      detail: "The backend has no working LLM provider configured. " + error.message,
+    };
+  }
+  if (error.status === 502) {
+    return { title: "The AI provider request failed.", detail: error.message };
+  }
+  if (error.status === 404) {
+    return { title: "Patient not found.", detail: error.message };
+  }
+  return { title: "Something went wrong.", detail: error.message };
+}
+
+function AskErrorBlock({ error, onRetry }: { error: ApiError; onRetry: () => void }) {
+  const { title, detail } = describeAskError(error);
+  return (
+    <div className="error-block">
+      <div style={{ fontWeight: 600, marginBottom: 4 }}>{title}</div>
+      <div>{detail}</div>
+      <button type="button" className="btn btn-secondary" style={{ marginTop: 10 }} onClick={onRetry}>
+        Try again
+      </button>
+    </div>
+  );
+}
 
 function useLoadingPhase(active: boolean) {
   const [phaseIndex, setPhaseIndex] = useState(0);
@@ -154,7 +192,7 @@ export function ResearchAssistant() {
         </p>
       </div>
 
-      {error && <ErrorBlock error={error} onRetry={() => submitQuery(queryInput)} />}
+      {error && <AskErrorBlock error={error} onRetry={() => submitQuery(queryInput)} />}
 
       {answer && <AnswerPanel answer={answer} />}
     </div>
@@ -184,14 +222,26 @@ function AnswerPanel({ answer }: { answer: GroundedAnswer }) {
           <p style={{ fontSize: 14.5, lineHeight: 1.7, marginTop: 10 }}>{answer.answer_text}</p>
         )}
 
-        {answer.status === "insufficient_evidence" && (
+        {answer.status === "insufficient_evidence" && answer.retrieval_status === "evidence_found" && (
+          <div style={{ marginTop: 10, padding: "14px 16px", background: "var(--amber-surface)", border: "1px solid var(--amber-border)", borderRadius: "var(--radius-md)" }}>
+            <p style={{ fontSize: 13.5, color: "var(--amber)", fontWeight: 600 }}>
+              Relevant evidence exists, but a safely grounded answer could not be generated from it.
+            </p>
+            <p className="text-muted" style={{ fontSize: 12.5, marginTop: 6 }}>
+              The assistant's response didn't clearly cite the retrieved evidence, so it was rejected rather than
+              shown unverified. Try rephrasing the question, or check this patient's Evidence tab directly.
+            </p>
+          </div>
+        )}
+
+        {answer.status === "insufficient_evidence" && answer.retrieval_status !== "evidence_found" && (
           <div style={{ marginTop: 10, padding: "14px 16px", background: "var(--amber-surface)", border: "1px solid var(--amber-border)", borderRadius: "var(--radius-md)" }}>
             <p style={{ fontSize: 13.5, color: "var(--amber)", fontWeight: 600 }}>
               There is insufficient recorded evidence to answer this question.
             </p>
             <p className="text-muted" style={{ fontSize: 12.5, marginTop: 6 }}>
               This is not a statement that the patient does or does not have any particular condition — it means the
-              retrieval system could not find or verify a grounded answer in the patient's recorded evidence.
+              retrieval system could not find matching evidence in the patient's recorded evidence.
             </p>
           </div>
         )}

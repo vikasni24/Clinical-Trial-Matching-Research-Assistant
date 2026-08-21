@@ -87,7 +87,9 @@ class AskService:
             return gated_answer
 
         prompt = build_grounded_prompt(context)
-        prompt_text = "\n\n".join([prompt.instructions, prompt.status_note, prompt.evidence_text])
+        prompt_text = "\n\n".join(
+            [prompt.instructions, prompt.status_note, f"QUESTION: {prompt.query}", prompt.evidence_text]
+        )
         raw_answer_text = self._llm_provider.generate(prompt_text)
 
         answer = build_grounded_answer(context, raw_answer_text)

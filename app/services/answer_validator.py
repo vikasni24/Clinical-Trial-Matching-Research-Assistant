@@ -74,6 +74,7 @@ def build_grounded_answer(context: GroundedContext, raw_answer_text: str) -> Gro
             query=context.query,
             status=status,
             message=context.message or "No evidence was available to ground an answer.",
+            retrieval_status=context.status,
         )
 
     cited_keys = _extract_cited_keys(raw_answer_text)
@@ -85,6 +86,7 @@ def build_grounded_answer(context: GroundedContext, raw_answer_text: str) -> Gro
             query=context.query,
             status="insufficient_evidence",
             message="Generated answer did not cite any supplied evidence and cannot be verified as grounded.",
+            retrieval_status=context.status,
         )
 
     available_keys = {(item.resource_type, item.resource_id) for item in context.evidence}
@@ -100,6 +102,7 @@ def build_grounded_answer(context: GroundedContext, raw_answer_text: str) -> Gro
                 "Generated answer referenced evidence that was not supplied "
                 f"({len(fabricated_keys)} fabricated reference(s)); rejected rather than trusted."
             ),
+            retrieval_status=context.status,
         )
 
     # Rule 4: every citation resolves — pull the ACTUAL supplied Evidence
@@ -125,4 +128,5 @@ def build_grounded_answer(context: GroundedContext, raw_answer_text: str) -> Gro
         status="answered",
         answer_text=raw_answer_text,
         evidence=matched_evidence,
+        retrieval_status=context.status,
     )

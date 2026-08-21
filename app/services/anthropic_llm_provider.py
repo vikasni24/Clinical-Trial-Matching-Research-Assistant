@@ -32,6 +32,7 @@ from app.config import Settings, get_settings
 
 _ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages"
 _ANTHROPIC_API_VERSION = "2023-06-01"
+_DEFAULT_MODEL = "claude-haiku-4-5-20251001"
 _MAX_TOKENS = 1024
 
 
@@ -61,7 +62,7 @@ class AnthropicLLMProvider:
                 "LLM_API_KEY is not configured — set it via environment variable before using AnthropicLLMProvider"
             )
         self._api_key = settings.llm_api_key
-        self._model = settings.llm_model
+        self._model = settings.llm_model or _DEFAULT_MODEL
         self._timeout = settings.llm_timeout_seconds
         self._client = client or httpx.Client()
 

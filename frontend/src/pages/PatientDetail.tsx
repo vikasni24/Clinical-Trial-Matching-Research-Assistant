@@ -10,7 +10,7 @@ import { PaginationBar } from "../components/common/Pagination";
 import { EvidenceCardList } from "../components/evidence/EvidenceCard";
 import { EvidenceCategoryChart, type EvidenceCategoryDatum } from "../components/charts/EvidenceCategoryChart";
 import { ObservationTrendChart } from "../components/charts/ObservationTrendChart";
-import { IconAssistant, IconTrials } from "../components/common/Icons";
+import { IconAssistant, IconAudit, IconTrials } from "../components/common/Icons";
 import { formatDate, formatDateTime } from "../utils/format";
 import { groupObservationTrends } from "../utils/observationGrouping";
 import type { EvidenceListOut } from "../types/api";
@@ -79,6 +79,9 @@ export function PatientDetail() {
           </button>
           <button type="button" className="btn btn-primary" onClick={() => navigate(`/patients/${patientId}/assistant`)}>
             <IconAssistant /> Research assistant
+          </button>
+          <button type="button" className="btn btn-secondary" onClick={() => navigate(`/patients/${patientId}/audit`)}>
+            <IconAudit /> Audit history
           </button>
         </div>
       </div>

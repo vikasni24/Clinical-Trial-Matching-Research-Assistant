@@ -124,6 +124,13 @@ export function Patients() {
                           >
                             Ask assistant
                           </button>
+                          <button
+                            type="button"
+                            className="btn btn-ghost"
+                            onClick={() => navigate(`/patients/${patient.patient_id}/audit`)}
+                          >
+                            Audit history
+                          </button>
                         </div>
                       </td>
                     </tr>

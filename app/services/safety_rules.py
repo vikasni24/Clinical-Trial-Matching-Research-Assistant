@@ -69,6 +69,7 @@ def enforce_pre_generation_safety(context: GroundedContext) -> Optional[Grounded
             query=context.query,
             status="unsupported",
             message=context.message or "This query could not be serviced by the retrieval system.",
+            retrieval_status=context.status,
         )
 
     # Rule 1: no evidence was found.
@@ -78,6 +79,7 @@ def enforce_pre_generation_safety(context: GroundedContext) -> Optional[Grounded
             query=context.query,
             status="insufficient_evidence",
             message=context.message or "No evidence was found for this patient to ground an answer.",
+            retrieval_status=context.status,
         )
 
     return None

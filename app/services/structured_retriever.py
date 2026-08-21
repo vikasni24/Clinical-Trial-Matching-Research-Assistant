@@ -164,16 +164,27 @@ class CategoryConcept:
     that represents it — distinct from StructuredConcept above, which maps
     to one SPECIFIC named concept with one specific code. Never a guess:
     only the resource types listed here are ever reachable, and only via
-    one of their own explicitly listed trigger words."""
+    one of their own explicitly listed trigger words.
+
+    resource_type is None for exactly one entry ("summary_category" below)
+    — a deliberate, explicit escape hatch for "give me an overview of
+    everything" questions (one of the app's own suggested question chips),
+    which by definition aren't about any single resource type. It still
+    goes through the same patient-scoped EvidenceService.get_patient_evidence
+    call every other retriever path already uses (resource_type=None simply
+    means "this patient's evidence, unfiltered by type" — never another
+    patient's, never unbounded, since the ranker below still truncates to
+    DEFAULT_LIMIT)."""
 
     key: str
-    resource_type: str
+    resource_type: Optional[str]
     triggers: tuple[str, ...]
 
 
 # Deliberately small and explicit — do NOT turn arbitrary nouns into
 # resource types. Each entry is a category of clinical data a patient's
-# record may hold, mapped to the one FHIR resource_type that represents it.
+# record may hold, mapped to the one FHIR resource_type that represents it
+# (or, for summary_category only, to no single type at all).
 _CATEGORY_REGISTRY: tuple[CategoryConcept, ...] = (
     CategoryConcept(
         key="medication_category",
@@ -189,6 +200,13 @@ _CATEGORY_REGISTRY: tuple[CategoryConcept, ...] = (
         key="allergy_category",
         resource_type="AllergyIntolerance",
         triggers=("allergies", "allergy"),
+    ),
+    # Checked last and deliberately broad — only reached when nothing more
+    # specific above (or any registered StructuredConcept) already matched.
+    CategoryConcept(
+        key="summary_category",
+        resource_type=None,
+        triggers=("summarize", "summary", "overview"),
     ),
 )
 
@@ -235,11 +253,14 @@ class StructuredEvidenceRetriever:
 
         category = _match_category(request.query)
         if category is not None:
-            # Patient-scoped, resource-type-scoped lookup — a category
-            # question ("what medications...") maps to one resource_type,
-            # never to another patient's data and never to an unbounded,
-            # untyped scan. Ranked and truncated the same deterministic way
-            # SemanticEvidenceRetriever already ranks its own candidates.
+            # Patient-scoped lookup — a category question ("what
+            # medications...") maps to one resource_type; the one
+            # deliberate exception (summary_category, resource_type=None)
+            # maps to this patient's evidence unfiltered by type. Either
+            # way: never another patient's data, never unbounded (the
+            # ranker below still truncates to DEFAULT_LIMIT), and ranked
+            # the same deterministic way SemanticEvidenceRetriever already
+            # ranks its own candidates.
             candidates = list(
                 self._evidence_service.get_patient_evidence(request.patient_id, resource_type=category.resource_type)
             )

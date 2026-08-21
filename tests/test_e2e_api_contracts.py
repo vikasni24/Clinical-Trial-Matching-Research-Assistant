@@ -50,7 +50,7 @@ def test_full_api_workflow_walk(api_client, mongo_db, tmp_path, fixtures_dir):
     # 1. Health endpoint.
     health = api_client.get("/health")
     assert health.status_code == 200
-    assert health.json() == {"status": "ok"}
+    assert health.json()["status"] == "ok"
 
     # 2. Patient listing.
     patients = api_client.get("/api/patients")

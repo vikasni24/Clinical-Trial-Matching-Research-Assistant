@@ -234,6 +234,11 @@ export interface GroundedAnswer {
   answer_text: string | null;
   evidence: Evidence[];
   message: string | null;
+  /** Distinguishes "no evidence was ever retrieved" from "evidence existed
+   * but the generated answer wasn't grounded in it" — both otherwise
+   * collapse into status="insufficient_evidence". May be null for older
+   * backend versions that don't send it. */
+  retrieval_status: RetrievalStatus | null;
 }
 
 // --- audit (app/models/audit.py) --------------------------------------------------

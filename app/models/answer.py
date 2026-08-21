@@ -26,6 +26,7 @@ from typing import Literal, Optional
 from pydantic import BaseModel, Field, model_validator
 
 from app.models.evidence import Evidence
+from app.models.retrieval import RetrievalStatus
 
 AnswerStatus = Literal["answered", "insufficient_evidence", "unsupported"]
 
@@ -43,6 +44,15 @@ class GroundedAnswer(BaseModel):
     # Human-readable context for insufficient_evidence/unsupported — e.g.
     # why no answer could be given. Never a clinical fact, never reasoning.
     message: Optional[str] = None
+    # Optional — mirrors AuditRecord's existing retrieval_status/answer_status
+    # split (app/models/audit.py). status alone can't distinguish "no
+    # evidence was ever retrieved" from "evidence existed but the LLM's raw
+    # answer wasn't grounded in it" — both collapse to
+    # status="insufficient_evidence". Populated from GroundedContext.status
+    # by safety_rules.py and answer_validator.py; left None (never
+    # required) so it's purely additive — no other caller/test that
+    # constructs a GroundedAnswer needs to change.
+    retrieval_status: Optional[RetrievalStatus] = None
 
     @model_validator(mode="after")
     def _validate_status_matches_answer_and_evidence(self) -> "GroundedAnswer":
